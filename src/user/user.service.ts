@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserEntity } from './schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
@@ -8,6 +8,8 @@ import { compare } from 'bcrypt';
 import { sign } from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 import { UserResponseDto } from './dto/user-response.dto';
+import { State } from '../state/state';
+import { StatusNotification } from '../state/status-notification';
 
 @Injectable()
 export class UserService {
@@ -18,32 +20,26 @@ export class UserService {
     private configService: ConfigService,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<UserEntity> {
+  async createUser(createUserDto: CreateUserDto): Promise<State<UserResponseDto, string>> {
     this.logger.log('Creating a new user');
     const user = await this.userModel.findOne({ email: createUserDto.email });
 
     if (user) {
       this.logger.warn(`Email ${createUserDto.email} is already taken`);
-      throw new HttpException(
-        'Email is already taken',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
+      return State.builder<UserResponseDto, string>().forError('Email is already taken');
     }
 
     try {
       const createdUser = new this.userModel(createUserDto);
       this.logger.log(`User ${createUserDto.email} created successfully`);
-      return createdUser.save();
+      return State.builder<UserResponseDto, string>().forSuccess(this.buildUserResponse(await createdUser.save()));
     } catch (error) {
       this.logger.error('Error creating user:', error);
-      throw new HttpException(
-        'Internal Server Error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      return State.builder<UserResponseDto, string>().forError('Internal Server Error');
     }
   }
 
-  async loginUser(loginDto: LoginDto): Promise<UserEntity> {
+  async loginUser(loginDto: LoginDto): Promise<State<UserResponseDto, string>> {
     this.logger.log(`Logging in user ${loginDto.email}`);
     const user = await this.userModel
       .findOne({ email: loginDto.email })
@@ -51,24 +47,18 @@ export class UserService {
 
     if (!user) {
       this.logger.warn(`User ${loginDto.email} not found`);
-      throw new HttpException(
-        'User not found',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
+      return State.builder<UserResponseDto, string>().forError('User not found');
     }
 
     const isPasswordCorrect = await compare(loginDto.password, user.password);
 
     if (!isPasswordCorrect) {
       this.logger.warn(`Incorrect password for user ${loginDto.email}`);
-      throw new HttpException(
-        'Incorrect password',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
+      return State.builder<UserResponseDto, string>().forError('Incorrect password');
     }
 
     this.logger.log(`User ${loginDto.email} logged in successfully`);
-    return user;
+    return State.builder<UserResponseDto, string>().forSuccess(this.buildUserResponse(user));
   }
 
   buildUserResponse(userEntity: UserEntity, token?: string): UserResponseDto {

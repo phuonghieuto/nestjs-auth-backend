@@ -2,41 +2,67 @@ import {
   Body,
   Controller,
   Get,
-  HttpException,
   HttpStatus,
+  Logger,
   Post,
   Request,
+  Res,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserService } from './user.service';
-import { UserResponseType } from './type/userResponse.type';
 import { LoginDto } from './dto/login.dto';
 import { ExpressRequest } from '../middleware/auth.middleware';
+import { Response } from 'express';
+import { State } from '../state/state';
+import { StatusNotification } from '../state/status-notification';
 
 @Controller()
 export class UserController {
+  private readonly logger = new Logger(UserController.name);
+
   constructor(private readonly userService: UserService) {}
 
   @Post('user/register')
-  async createUser(@Body() createUserDto: CreateUserDto): Promise<any> {
-    const user = await this.userService.createUser(createUserDto);
-    return this.userService.buildUserResponse(user);
+  async createUser(
+    @Body() createUserDto: CreateUserDto,
+    @Res() res: Response,
+  ): Promise<any> {
+    this.logger.log('Registering a new user');
+    const state = await this.userService.createUser(createUserDto);
+    return res.status(HttpStatus.OK).json(state);
   }
 
   @Post('users/login')
-  async login(@Body() loginDto: LoginDto): Promise<UserResponseType> {
-    const user = await this.userService.loginUser(loginDto);
-    return this.userService.buildUserResponse(user);
+  async login(@Body() loginDto: LoginDto, @Res() res: Response): Promise<any> {
+    this.logger.log('User login attempt');
+    const state = await this.userService.loginUser(loginDto);
+    return res.status(HttpStatus.OK).json(state);
   }
 
   @Get('user')
   async currentUser(
     @Request() request: ExpressRequest,
-  ): Promise<UserResponseType> {
+    @Res() res: Response,
+  ): Promise<any> {
+    this.logger.log('Fetching current user');
     if (!request.user) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
+      return res
+        .status(HttpStatus.OK)
+        .json(State.builder().forUnauthorized('Unauthorized'));
+    }
+    const user = await this.userService.findByEmail(request.user.email);
+    if (!user) {
+      return res
+        .status(HttpStatus.OK)
+        .json(State.builder().forUnauthorized('Unauthorized'));
     }
     const token = request.headers['authorization'].split(' ')[1];
-    return this.userService.buildUserResponse(request.user, token);
+    return res
+      .status(HttpStatus.OK)
+      .json(
+        State.builder().forSuccess(
+          this.userService.buildUserResponse(user, token),
+        ),
+      );
   }
 }
