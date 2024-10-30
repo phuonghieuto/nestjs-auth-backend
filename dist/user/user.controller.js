@@ -70,7 +70,34 @@ __decorate([
 __decorate([
     (0, common_1.Post)('user/register'),
     (0, swagger_1.ApiOperation)({ summary: 'Register a new user' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'User registered successfully' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'User registered successfully',
+        type: state_1.State,
+        examples: {
+            success: {
+                summary: 'Success Response',
+                value: {
+                    status: 'OK',
+                    value: {
+                        name: 'John Doe',
+                        email: 'john.doe@example.com',
+                        token: 'jwt-token',
+                        createdAt: '2023-10-01T00:00:00.000Z'
+                    },
+                    error: null
+                }
+            },
+            error: {
+                summary: 'Error Response',
+                value: {
+                    status: 'ERROR',
+                    value: null,
+                    error: 'Email is already taken'
+                }
+            }
+        }
+    }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Bad Request' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
@@ -81,7 +108,34 @@ __decorate([
 __decorate([
     (0, common_1.Post)('users/login'),
     (0, swagger_1.ApiOperation)({ summary: 'Login a user' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'User logged in successfully' }),
+    (0, swagger_1.ApiResponse)({
+        status: 200,
+        description: 'User logged in successfully',
+        type: state_1.State,
+        examples: {
+            success: {
+                summary: 'Success Response',
+                value: {
+                    status: 'OK',
+                    value: {
+                        name: 'John Doe',
+                        email: 'john.doe@example.com',
+                        token: 'jwt-token',
+                        createdAt: '2023-10-01T00:00:00.000Z'
+                    },
+                    error: null
+                }
+            },
+            error: {
+                summary: 'Error Response',
+                value: {
+                    status: 'ERROR',
+                    value: null,
+                    error: 'Incorrect password'
+                }
+            }
+        }
+    }),
     (0, swagger_1.ApiResponse)({ status: 400, description: 'Bad Request' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Res)()),
@@ -91,10 +145,41 @@ __decorate([
 ], UserController.prototype, "login", null);
 __decorate([
     (0, common_1.Get)('user'),
+    (0, swagger_1.ApiBearerAuth)(),
     (0, swagger_1.ApiOperation)({ summary: 'Get current user' }),
     (0, swagger_1.ApiResponse)({
         status: 200,
         description: 'Current user fetched successfully',
+        type: state_1.State,
+        headers: {
+            Authorization: {
+                description: 'Bearer token',
+                required: true,
+            },
+        },
+        examples: {
+            success: {
+                summary: 'Success Response',
+                value: {
+                    status: 'OK',
+                    value: {
+                        name: 'John Doe',
+                        email: 'john.doe@example.com',
+                        token: 'jwt-token',
+                        createdAt: '2023-10-01T00:00:00.000Z'
+                    },
+                    error: null
+                }
+            },
+            unauthorized: {
+                summary: 'Unauthorized Response',
+                value: {
+                    status: 'UNAUTHORIZED',
+                    value: null,
+                    error: 'Unauthorized'
+                }
+            }
+        }
     }),
     (0, swagger_1.ApiResponse)({ status: 401, description: 'Unauthorized' }),
     __param(0, (0, common_1.Request)()),

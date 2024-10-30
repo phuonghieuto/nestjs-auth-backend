@@ -14,7 +14,7 @@ import { LoginDto } from './dto/login.dto';
 import { ExpressRequest } from '../middleware/auth.middleware';
 import { Response } from 'express';
 import { State } from '../state/state';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('user')
 @Controller()
@@ -32,7 +32,34 @@ export class UserController {
 
   @Post('user/register')
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 200, description: 'User registered successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'User registered successfully',
+    type: State,
+    examples: {
+      success: {
+        summary: 'Success Response',
+        value: {
+          status: 'OK',
+          value: {
+            name: 'John Doe',
+            email: 'john.doe@example.com',
+            token: 'jwt-token',
+            createdAt: '2023-10-01T00:00:00.000Z'
+          },
+          error: null
+        }
+      },
+      error: {
+        summary: 'Error Response',
+        value: {
+          status: 'ERROR',
+          value: null,
+          error: 'Email is already taken'
+        }
+      }
+    }
+  })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   async createUser(
     @Body() createUserDto: CreateUserDto,
@@ -45,7 +72,34 @@ export class UserController {
 
   @Post('users/login')
   @ApiOperation({ summary: 'Login a user' })
-  @ApiResponse({ status: 200, description: 'User logged in successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'User logged in successfully',
+    type: State,
+    examples: {
+      success: {
+        summary: 'Success Response',
+        value: {
+          status: 'OK',
+          value: {
+            name: 'John Doe',
+            email: 'john.doe@example.com',
+            token: 'jwt-token',
+            createdAt: '2023-10-01T00:00:00.000Z'
+          },
+          error: null
+        }
+      },
+      error: {
+        summary: 'Error Response',
+        value: {
+          status: 'ERROR',
+          value: null,
+          error: 'Incorrect password'
+        }
+      }
+    }
+  })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   async login(@Body() loginDto: LoginDto, @Res() res: Response): Promise<any> {
     this.logger.log('User login attempt');
@@ -54,10 +108,41 @@ export class UserController {
   }
 
   @Get('user')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user' })
   @ApiResponse({
     status: 200,
     description: 'Current user fetched successfully',
+    type: State,
+    headers: {
+      Authorization: {
+        description: 'Bearer token',
+        required: true,
+      },
+    },
+    examples: {
+      success: {
+        summary: 'Success Response',
+        value: {
+          status: 'OK',
+          value: {
+            name: 'John Doe',
+            email: 'john.doe@example.com',
+            token: 'jwt-token',
+            createdAt: '2023-10-01T00:00:00.000Z'
+          },
+          error: null
+        }
+      },
+      unauthorized: {
+        summary: 'Unauthorized Response',
+        value: {
+          status: 'UNAUTHORIZED',
+          value: null,
+          error: 'Unauthorized'
+        }
+      }
+    }
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async currentUser(
