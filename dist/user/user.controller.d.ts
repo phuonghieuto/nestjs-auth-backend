@@ -7,6 +7,7 @@ export declare class UserController {
     private readonly userService;
     private readonly logger;
     constructor(userService: UserService);
+    home(res: Response): Promise<any>;
     createUser(createUserDto: CreateUserDto, res: Response): Promise<any>;
     login(loginDto: LoginDto, res: Response): Promise<any>;
     currentUser(request: ExpressRequest, res: Response): Promise<any>;

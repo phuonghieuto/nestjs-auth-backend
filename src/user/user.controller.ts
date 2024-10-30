@@ -22,6 +22,11 @@ export class UserController {
 
   constructor(private readonly userService: UserService) {}
 
+  @Get('')
+  async home(@Res() res: Response): Promise<any> {
+    return res.status(HttpStatus.OK).json("It's working!");
+  }
+
   @Post('user/register')
   async createUser(
     @Body() createUserDto: CreateUserDto,

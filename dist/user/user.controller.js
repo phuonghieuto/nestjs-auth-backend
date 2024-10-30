@@ -24,6 +24,9 @@ let UserController = UserController_1 = class UserController {
         this.userService = userService;
         this.logger = new common_1.Logger(UserController_1.name);
     }
+    async home(res) {
+        return res.status(common_1.HttpStatus.OK).json("It's working!");
+    }
     async createUser(createUserDto, res) {
         this.logger.log('Registering a new user');
         const state = await this.userService.createUser(createUserDto);
@@ -54,6 +57,13 @@ let UserController = UserController_1 = class UserController {
     }
 };
 exports.UserController = UserController;
+__decorate([
+    (0, common_1.Get)(''),
+    __param(0, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "home", null);
 __decorate([
     (0, common_1.Post)('user/register'),
     __param(0, (0, common_1.Body)()),
